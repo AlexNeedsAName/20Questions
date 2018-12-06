@@ -1,2 +1,2 @@
-public class Answer {
+public class Answer implements Node {
 }

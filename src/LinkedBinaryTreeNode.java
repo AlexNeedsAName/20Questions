@@ -1,23 +1,27 @@
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
+
+    private E data;
+    private BinaryTreeNode<E> leftChild, rightChild, parent;
 
     /**
      * Returns the data stored in this node.
      */
     @Override
     public E getData() {
-        return null;
+        return data;
     }
 
     /**
      * Modifies the data stored in this node.
      *
-     * @param data
+     * @param data the data to store
      */
     @Override
     public void setData(E data) {
-
+        this.data = data;
     }
 
     /**
@@ -26,7 +30,11 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
      */
     @Override
     public BinaryTreeNode<E> getRoot() {
-        return null;
+        if (getParent() == null) {
+            return this;
+        } else {
+            return getParent().getRoot();
+        }
     }
 
     /**
@@ -34,7 +42,7 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
      */
     @Override
     public BinaryTreeNode<E> getParent() {
-        return null;
+        return parent;
     }
 
     /**
@@ -43,7 +51,7 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
      */
     @Override
     public BinaryTreeNode<E> getLeft() {
-        return null;
+        return leftChild;
     }
 
     /**
@@ -51,11 +59,11 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
      * left child of this node.  If this node already has a left
      * child it is removed.
      *
-     * @param child
+     * @param child the child to add
      */
     @Override
     public void setLeft(BinaryTreeNode<E> child) {
-
+        leftChild = child;
     }
 
     /**
@@ -64,7 +72,7 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
      */
     @Override
     public BinaryTreeNode<E> getRight() {
-        return null;
+        return rightChild;
     }
 
     /**
@@ -72,11 +80,11 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
      * right child of this node.  If this node already has a right
      * child it is removed.
      *
-     * @param child
+     * @param child the child to add
      */
     @Override
     public void setRight(BinaryTreeNode<E> child) {
-
+        rightChild = child;
     }
 
     /**
@@ -85,7 +93,7 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
      */
     @Override
     public boolean isParent() {
-        return false;
+        return (leftChild != null || rightChild != null);
     }
 
     /**
@@ -94,7 +102,7 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
      */
     @Override
     public boolean isLeaf() {
-        return false;
+        return !isParent();
     }
 
     /**
@@ -102,7 +110,7 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
      */
     @Override
     public boolean hasLeftChild() {
-        return false;
+        return (leftChild != null);
     }
 
     /**
@@ -110,7 +118,7 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
      */
     @Override
     public boolean hasRightChild() {
-        return false;
+        return (rightChild != null);
     }
 
     /**
@@ -118,7 +126,7 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
      */
     @Override
     public int getDepth() {
-        return 0;
+        return getRoot().pathTo(this).size() - 1;
     }
 
     /**
@@ -127,7 +135,9 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
      */
     @Override
     public int getHeight() {
-        return 0;
+        final int maxDepth[] = {0};
+        traversePreorder(node -> maxDepth[0] = Math.max(node.getDepth(), maxDepth[0]));
+        return maxDepth[0];
     }
 
     /**
@@ -135,7 +145,9 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
      */
     @Override
     public int size() {
-        return 0;
+        final int size[] = {0};
+        traversePreorder(node -> size[0]++);
+        return size[0];
     }
 
     /**
@@ -144,58 +156,105 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
      */
     @Override
     public void removeFromParent() {
-
+        if (this.parent != null) {
+            if (parent.getLeft() == this) {
+                parent.setLeft(null);
+            } else if (parent.getRight() == this) {
+                parent.setRight(null);
+            } // else not actually a child of parent somehow?
+        }
     }
 
     /**
      * Returns the path from this node to the specified descendant.
      * If no path exists, returns an empty list.
      *
-     * @param descendant
+     * @param descendant the descendent to get a pathTo
      */
     @Override
     public ArrayList<BinaryTreeNode<E>> pathTo(BinaryTreeNode<E> descendant) {
-        return null;
+        ArrayList<BinaryTreeNode<E>> path = new ArrayList<>();
+        BinaryTreeNode<E> current = descendant;
+        do {
+            path.add(current);
+            if (current == this) {
+                break;
+            }
+            current = current.getParent();
+        } while (current != null);
+        if (current == null) {
+            path.clear();
+        }
+        return path;
     }
 
     /**
      * Returns the path to this node from the specified ancestor.
      * If no path exists, returns an empty list.
      *
-     * @param ancestor
+     * @param ancestor the ancestor to get the path from
      */
     @Override
     public ArrayList<BinaryTreeNode<E>> pathFrom(BinaryTreeNode<E> ancestor) {
-        return null;
+        ArrayList<BinaryTreeNode<E>> path = ancestor.pathTo(this);
+        Collections.reverse(path);
+        return path;
     }
 
     /**
      * Visits the nodes in this tree in preorder.
      *
-     * @param visitor
+     * @param visitor the code to execute when visiting a node.
      */
     @Override
     public void traversePreorder(Visitor visitor) {
-
+        if (visitor == null) {
+            throw new IllegalArgumentException();
+        }
+        visitor.visit(this);
+        if (hasLeftChild()) {
+            leftChild.traversePreorder(visitor);
+        }
+        if (hasRightChild()) {
+            rightChild.traversePreorder(visitor);
+        }
     }
 
     /**
      * Visits the nodes in this tree in postorder.
      *
-     * @param visitor
+     * @param visitor the code to execute when visiting a node.
      */
     @Override
     public void traversePostorder(Visitor visitor) {
-
+        if (visitor == null) {
+            throw new IllegalArgumentException();
+        }
+        if (hasLeftChild()) {
+            leftChild.traversePostorder(visitor);
+        }
+        if (hasRightChild()) {
+            rightChild.traversePostorder(visitor);
+        }
+        visitor.visit(this);
     }
 
     /**
      * Visits the nodes in this tree in inorder.
      *
-     * @param visitor
+     * @param visitor the code to execute when visiting a node.
      */
     @Override
     public void traverseInorder(Visitor visitor) {
-
+        if (visitor == null) {
+            throw new IllegalArgumentException();
+        }
+        if (hasLeftChild()) {
+            leftChild.traversePostorder(visitor);
+        }
+        visitor.visit(this);
+        if (hasRightChild()) {
+            rightChild.traversePostorder(visitor);
+        }
     }
 }

@@ -1,2 +1,3 @@
-public class Question {
+public class Question implements Node {
+
 }
