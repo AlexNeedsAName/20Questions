@@ -1,5 +1,8 @@
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Scanner;
 
 public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
 
@@ -43,6 +46,10 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
     @Override
     public BinaryTreeNode<E> getParent() {
         return parent;
+    }
+
+    public void setParent(BinaryTreeNode<E> parent) {
+        this.parent = parent;
     }
 
     /**
@@ -250,11 +257,64 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
             throw new IllegalArgumentException();
         }
         if (hasLeftChild()) {
-            leftChild.traversePostorder(visitor);
+            leftChild.traverseInorder(visitor);
         }
         visitor.visit(this);
         if (hasRightChild()) {
             rightChild.traversePostorder(visitor);
         }
+    }
+
+    public static LinkedBinaryTreeNode fromFile(String filename) {
+        try (Scanner input = new Scanner(new File(filename))) {
+            if (!input.hasNextLine()) {
+                //Empty file, nothing to read.
+                return null;
+            }
+            String line = input.nextLine();
+            LinkedBinaryTreeNode root;
+            if (line.charAt(0) == 'A') {
+                root = new Answer(line);
+            } else {
+                root = new Question(line);
+                LinkedBinaryTreeNode current = root;
+                while (input.hasNextLine()) {
+                    while (current.hasLeftChild() && current.hasRightChild()) {
+                        current = (LinkedBinaryTreeNode) current.getParent();
+                    }
+                    line = input.nextLine();
+                    if (line.trim().length() == 0) break;
+                    LinkedBinaryTreeNode newNode;
+                    if (line.charAt(0) == 'A') {
+                        newNode = new Answer(line);
+                    } else {
+                        newNode = new Question(line);
+                    }
+
+                    if (!current.hasLeftChild()) {
+                        current.setLeft(newNode);
+
+                    } else {
+                        current.setRight(newNode);
+                    }
+                    newNode.setParent(current);
+                    if (line.charAt(0) != 'A') {
+                        current = newNode;
+                    }
+                }
+            }
+            return root;
+        } catch (FileNotFoundException e) {
+            return null;
+        }
+    }
+
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        traversePreorder(node -> {
+            stringBuilder.append(node.getData().toString());
+            stringBuilder.append("\n");
+        });
+        return stringBuilder.toString();
     }
 }
