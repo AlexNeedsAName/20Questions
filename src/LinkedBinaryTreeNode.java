@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Scanner;
@@ -8,6 +9,52 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
 
     private E data;
     private BinaryTreeNode<E> leftChild, rightChild, parent;
+    private String filename;
+
+    public static LinkedBinaryTreeNode fromFile(String filename) {
+        try (Scanner input = new Scanner(new File(filename))) {
+            if (!input.hasNextLine()) {
+                //Empty file, nothing to read.
+                return null;
+            }
+            String line = input.nextLine();
+            LinkedBinaryTreeNode root;
+            if (line.charAt(0) == 'A') {
+                root = new Answer(line);
+            } else {
+                root = new Question(line);
+                LinkedBinaryTreeNode current = root;
+                while (input.hasNextLine()) {
+                    while (current.hasLeftChild() && current.hasRightChild()) {
+                        current = (LinkedBinaryTreeNode) current.getParent();
+                    }
+                    line = input.nextLine();
+                    if (line.trim().length() == 0) break;
+                    LinkedBinaryTreeNode newNode;
+                    if (line.charAt(0) == 'A') {
+                        newNode = new Answer(line);
+                    } else {
+                        newNode = new Question(line);
+                    }
+
+                    if (!current.hasLeftChild()) {
+                        current.setLeft(newNode);
+
+                    } else {
+                        current.setRight(newNode);
+                    }
+                    newNode.setParent(current);
+                    if (line.charAt(0) != 'A') {
+                        current = newNode;
+                    }
+                }
+            }
+            root.setFilename(filename);
+            return root;
+        } catch (FileNotFoundException e) {
+            return null;
+        }
+    }
 
     /**
      * Returns the data stored in this node.
@@ -46,10 +93,6 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
     @Override
     public BinaryTreeNode<E> getParent() {
         return parent;
-    }
-
-    public void setParent(BinaryTreeNode<E> parent) {
-        this.parent = parent;
     }
 
     /**
@@ -101,6 +144,10 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
     @Override
     public boolean isParent() {
         return (leftChild != null || rightChild != null);
+    }
+
+    public void setParent(BinaryTreeNode<E> parent) {
+        this.parent = parent;
     }
 
     /**
@@ -265,47 +312,22 @@ public class LinkedBinaryTreeNode<E> implements BinaryTreeNode<E> {
         }
     }
 
-    public static LinkedBinaryTreeNode fromFile(String filename) {
-        try (Scanner input = new Scanner(new File(filename))) {
-            if (!input.hasNextLine()) {
-                //Empty file, nothing to read.
-                return null;
-            }
-            String line = input.nextLine();
-            LinkedBinaryTreeNode root;
-            if (line.charAt(0) == 'A') {
-                root = new Answer(line);
-            } else {
-                root = new Question(line);
-                LinkedBinaryTreeNode current = root;
-                while (input.hasNextLine()) {
-                    while (current.hasLeftChild() && current.hasRightChild()) {
-                        current = (LinkedBinaryTreeNode) current.getParent();
-                    }
-                    line = input.nextLine();
-                    if (line.trim().length() == 0) break;
-                    LinkedBinaryTreeNode newNode;
-                    if (line.charAt(0) == 'A') {
-                        newNode = new Answer(line);
-                    } else {
-                        newNode = new Question(line);
-                    }
+    public void setFilename(String filename) {
+        this.filename = filename;
+    }
 
-                    if (!current.hasLeftChild()) {
-                        current.setLeft(newNode);
+    public String getFilename(String filename) {
+        return filename;
+    }
 
-                    } else {
-                        current.setRight(newNode);
-                    }
-                    newNode.setParent(current);
-                    if (line.charAt(0) != 'A') {
-                        current = newNode;
-                    }
-                }
+    public void saveToFile() {
+        if (filename != null) {
+            try (PrintWriter output = new PrintWriter(filename)) {
+                getRoot().traversePreorder(node -> output.println(node.getData().toString()));
+                System.out.println("Saved to file.");
+            } catch (FileNotFoundException e) {
+                System.out.println("Could not save to file.");
             }
-            return root;
-        } catch (FileNotFoundException e) {
-            return null;
         }
     }
 

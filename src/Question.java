@@ -6,4 +6,8 @@ public class Question extends LinkedBinaryTreeNode<String> {
     public void setQuestion(String value) {
         super.setData("Q:" + value);
     }
+
+    public String getQuestion() {
+        return getData().substring(2);
+    }
 }
